@@ -13,7 +13,7 @@ module.exports = (criteria, sortProperty, offset = 0, limit = 20) => {
     .sort({ [sortProperty]: 1 })//es6 interpolate key
     .skip(offset)
     .limit(limit);
-  return Promise.all([query, Artist.count()])
+  return Promise.all([query, Artist.find(buildQuery(criteria)).count()])
     .then(results => {
       return {
         all: results[0],
@@ -26,6 +26,13 @@ module.exports = (criteria, sortProperty, offset = 0, limit = 20) => {
 
 const buildQuery = (criteria) => {
   const query = {};
+  
+  if (criteria.name) { //looking for text need index also
+    //if want to find any field faster use specific id for that.
+    //add index to collection > mongo shell > use dbname
+    //> db.artists.createInex({name :"text"})
+    query.$text = { $search: criteria.name };
+  }
   if (criteria.age) {
     query.age = {
       $gte: criteria.age.min,
